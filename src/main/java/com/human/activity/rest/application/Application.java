@@ -17,6 +17,9 @@ public class Application {
 
 		// RecognizeActivity.main();
 		// To start the execution of Prediction Activity
+		PredictWorker instance = PredictWorker.getInstance();
+		instance.startWorker();
+
 	}
 
 }

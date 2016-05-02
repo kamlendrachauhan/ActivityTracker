@@ -21,14 +21,10 @@ public class PredictWorker {
 	private CassandraOperations cassandraTemplate;
 
 	public void startWorker() {
-		while (this.cassandraTemplate == null)
-			;
-		if (this.cassandraTemplate != null) {
-			PredictActivity predictActivity = new PredictActivity(this.cassandraTemplate);
+		PredictActivity predictActivity = new PredictActivity(this.cassandraTemplate);
 
-			Thread predictThread = new Thread(predictActivity);
-			predictThread.start();
-		}
+		Thread predictThread = new Thread(predictActivity);
+		predictThread.start();
 	}
 
 	public CassandraOperations getCassandraTemplate() {

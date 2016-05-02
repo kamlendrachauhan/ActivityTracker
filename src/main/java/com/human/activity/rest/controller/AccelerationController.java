@@ -28,19 +28,12 @@ import com.human.activity.server.job.PredictWorker;
 public class AccelerationController {
 
 	private static final Logger log = LoggerFactory.getLogger(AccelerationController.class);
-	boolean flag = false;
 	@Autowired
 	private CassandraOperations cassandraTemplate;
 
 	@RequestMapping(method = POST, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> newAcceleration(@RequestBody @Valid AccelerationModel accelerationModel) {
 
-		if (!flag) {
-			PredictWorker instance = PredictWorker.getInstance();
-			instance.setCassandraTemplate(this.cassandraTemplate);
-			instance.startWorker();
-			flag = true;
-		}
 
 		Acceleration acceleration = new Acceleration(accelerationModel);
 
