@@ -1,7 +1,6 @@
 package com.human.activity.server.job;
 
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.javaFunctions;
-import static com.datastax.spark.connector.japi.CassandraJavaUtil.mapToRow;
 import static com.human.activity.server.data.ExtractFeature.computeAvgAbsDifference;
 import static com.human.activity.server.data.ExtractFeature.computeResultantAcc;
 
@@ -16,9 +15,11 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.tree.model.DecisionTreeModel;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.data.cassandra.core.CassandraTemplate;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
 import com.human.activity.rest.model.Result;
@@ -29,17 +30,28 @@ import com.human.activity.util.Constants;
 
 public class PredictActivity implements Runnable {
 
-	@Autowired
 	private CassandraOperations cassandraTemplate;
-
+	private SparkConf sparkConf;
+	private JavaSparkContext sc;
+	private static DecisionTreeModel model;
 	private static Timer timer;
 
 	public PredictActivity() {
 
 	}
 
+	public PredictActivity(CassandraOperations cassandraOperations) {
+		sparkConf = new SparkConf().setAppName("User's physical activity recognition")
+				.set("spark.cassandra.connection.host", "127.0.0.1").setMaster("local[*]");
+
+		sc = new JavaSparkContext(sparkConf);
+		model = DecisionTreeModel.load(sc.sc(), "activityrecognition");
+
+		this.cassandraTemplate = cassandraOperations;
+	}
+
 	public void startPrediction() {
-		String predictedActivity = PredictActivity.main();
+		String predictedActivity = predict(this.sc);
 
 		Result result = new Result();
 		UserTimestamp userTimestamp = new UserTimestamp();
@@ -52,17 +64,19 @@ public class PredictActivity implements Runnable {
 		List<Result> listOfResult = new ArrayList<>();
 		listOfResult.add(result);
 
+		if (this.cassandraTemplate == null) {
+			Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
+			Session session = cluster.connect("activityrecognition");
+			CassandraOperations cassandraOps = new CassandraTemplate(session);
+			this.cassandraTemplate = cassandraOps;
+
+		}
 		cassandraTemplate.insert(result);
 	}
 
 	public static synchronized String main() {
-		SparkConf sparkConf = new SparkConf().setAppName("User's physical activity recognition")
-				.set("spark.cassandra.connection.host", "127.0.0.1").setMaster("local[*]");
 
-		JavaSparkContext sc = new JavaSparkContext(sparkConf);
 		// Persist to the result table
-
-		String predictedActivity = predict(sc);
 
 		// JavaRDD<Result> resultRDD = sc.parallelize(listOfResult);
 		// javaFunctions(resultRDD).writerBuilder("activityrecognition",
@@ -71,7 +85,7 @@ public class PredictActivity implements Runnable {
 
 		// timer.schedule(new ResultCalculatorTask(),
 		// Constants.NUMBER_OF_SECONDS_DELAY);
-		return predictedActivity;
+		return "";
 	}
 
 	public static double predict_Old(JavaSparkContext sc) {
@@ -92,7 +106,6 @@ public class PredictActivity implements Runnable {
 	public static String predict(JavaSparkContext sc) {
 
 		// load the defined model
-		DecisionTreeModel model = DecisionTreeModel.load(sc.sc(), "activityrecognition");
 
 		Vector feature = computeFeature(sc);
 
@@ -174,21 +187,21 @@ public class PredictActivity implements Runnable {
 	@Override
 	public void run() {
 		timer = new Timer();
-		// timer.schedule(new ResultCalculatorTask(),
-		// Constants.NUMBER_OF_SECONDS_DELAY);
+		timer.schedule(new ResultCalculatorTask(), Constants.NUMBER_OF_SECONDS_DELAY,
+				Constants.NUMBER_OF_SECONDS_DELAY);
 		PredictActivity predictA = new PredictActivity();
 		predictA.startPrediction();
 
 		// PredictActivity.main();
 	}
-}
 
-class ResultCalculatorTask extends TimerTask {
+	class ResultCalculatorTask extends TimerTask {
 
-	@Override
-	public void run() {
-		System.out.println("Running Results Job");
-		PredictActivity.main();
+		@Override
+		public void run() {
+			System.out.println("Running Results Job");
+			startPrediction();
+		}
+
 	}
-
 }

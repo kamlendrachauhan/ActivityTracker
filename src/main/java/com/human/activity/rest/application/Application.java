@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import com.human.activity.server.job.PredictWorker;
 
 @Configuration
-@ComponentScan({"com.human.activity.rest","com.human.activity.server"})
+@ComponentScan({ "com.human.activity.rest", "com.human.activity.server" })
 @EnableAutoConfiguration
 public class Application {
 
@@ -17,7 +17,6 @@ public class Application {
 
 		// RecognizeActivity.main();
 		// To start the execution of Prediction Activity
-		PredictWorker.startWorker();
 	}
 
 }

@@ -7,7 +7,7 @@ public class Constants {
 	 * deduce the activity
 	 */
 	public static final int NUMBER_RECORDS_TO_RECOGNIZE_ACTIVITY = 100;
-	public static final int NUMBER_OF_SECONDS_DELAY = 30000;
+	public static final int NUMBER_OF_SECONDS_DELAY = 15000;
 	
 	public static final String ACC_X = "x";
 	public static final String ACC_Y = "y";
