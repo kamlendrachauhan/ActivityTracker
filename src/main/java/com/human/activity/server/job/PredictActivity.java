@@ -22,6 +22,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
+import com.human.activity.rest.model.Acceleration;
 import com.human.activity.rest.model.Result;
 import com.human.activity.rest.model.UserTimestamp;
 import com.human.activity.server.data.DataManager;
@@ -35,6 +36,7 @@ public class PredictActivity implements Runnable {
 	private JavaSparkContext sc;
 	private static DecisionTreeModel model;
 	private static Timer timer;
+	private static Session session;
 
 	public PredictActivity() {
 
@@ -66,7 +68,7 @@ public class PredictActivity implements Runnable {
 
 		if (this.cassandraTemplate == null) {
 			Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
-			Session session = cluster.connect("activityrecognition");
+			session = cluster.connect("activityrecognition");
 			CassandraOperations cassandraOps = new CassandraTemplate(session);
 			this.cassandraTemplate = cassandraOps;
 
@@ -150,6 +152,19 @@ public class PredictActivity implements Runnable {
 		JavaRDD<CassandraRow> data = cassandraRowsRDD.select("timestamp", "x", "y", "z").where("user_id=?", "TEST_USER")
 				.withDescOrder().limit(100l); // load the last 100 acceleration.
 
+		try {
+			if (data.count() > 0) {
+				String query = "TRUNCATE acceleration;";
+
+				if (session == null || session.isClosed()) {
+					Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
+					session = cluster.connect("activityrecognition");
+				}
+			    session.execute(query);
+			}
+		} catch (Exception exception) {
+			System.out.println("ERROR ----- " + exception.getMessage());
+		}
 		if (data.count() > 0) {
 			// transform into double array
 			JavaRDD<double[]> doubles = DataManager.toDouble(data);

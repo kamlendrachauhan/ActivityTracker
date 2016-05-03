@@ -34,7 +34,6 @@ public class AccelerationController {
 	@RequestMapping(method = POST, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> newAcceleration(@RequestBody @Valid AccelerationModel accelerationModel) {
 
-
 		Acceleration acceleration = new Acceleration(accelerationModel);
 
 		if (log.isInfoEnabled()) {
@@ -61,6 +60,17 @@ public class AccelerationController {
 				"<div>*****************************************************************************************</div><body>");
 
 		ResponseEntity<String> response = new ResponseEntity<String>(builder.toString(), FOUND);
+
+		return response;
+	}
+
+	@RequestMapping(value = "/prediction", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getLastestPrediction() {
+		Result prediction = cassandraTemplate
+				.select("select * from result where user_id='TEST_USER' order by timestamp desc limit 1", Result.class)
+				.get(0);
+
+		ResponseEntity<String> response = new ResponseEntity<String>(prediction.getPrediction(), FOUND);
 
 		return response;
 	}
