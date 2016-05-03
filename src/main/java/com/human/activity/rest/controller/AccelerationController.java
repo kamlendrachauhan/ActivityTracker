@@ -77,12 +77,12 @@ public class AccelerationController {
 	}
 	
 	@RequestMapping(value = "/summary", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<String> getSummaryOfPrediction() {
-		String prediction = cassandraTemplate
-				.select("select group_and_count(prediction) from activityrecognition.result", String.class)
+	public ResponseEntity<Object> getSummaryOfPrediction() {
+		Object prediction = cassandraTemplate
+				.select("select group_and_count(prediction) from activityrecognition.result", Object.class)
 				.get(0);
 
-		ResponseEntity<String> response = new ResponseEntity<String>(prediction, HttpStatus.OK);
+		ResponseEntity<Object> response = new ResponseEntity<Object>(prediction, HttpStatus.OK);
 
 		return response;
 	}
