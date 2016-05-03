@@ -6,12 +6,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_HTML_VALUE;
 import static org.springframework.http.ResponseEntity.status;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.human.activity.rest.model.Acceleration;
 import com.human.activity.rest.model.AccelerationModel;
 import com.human.activity.rest.model.Result;
-import com.human.activity.server.job.PredictWorker;
 
 @RestController
 @RequestMapping("/acceleration")
@@ -70,7 +71,7 @@ public class AccelerationController {
 				.select("select * from result where user_id='TEST_USER' order by timestamp desc limit 1", Result.class)
 				.get(0);
 
-		ResponseEntity<String> response = new ResponseEntity<String>(prediction.getPrediction(), FOUND);
+		ResponseEntity<String> response = new ResponseEntity<String>(prediction.getPrediction(), HttpStatus.OK);
 
 		return response;
 	}

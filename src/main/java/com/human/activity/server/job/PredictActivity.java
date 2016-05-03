@@ -22,7 +22,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
-import com.human.activity.rest.model.Acceleration;
 import com.human.activity.rest.model.Result;
 import com.human.activity.rest.model.UserTimestamp;
 import com.human.activity.server.data.DataManager;
@@ -60,7 +59,7 @@ public class PredictActivity implements Runnable {
 		userTimestamp.setTimestamp(System.currentTimeMillis());
 		userTimestamp.setUser_id("TEST_USER");
 		result.setUserTimestamp(userTimestamp);
-		System.out.println("----------- Activity  ---------" + predictedActivity);
+		System.out.println("----------- Activity  ---------> " + predictedActivity);
 		result.setPrediction(predictedActivity);
 
 		List<Result> listOfResult = new ArrayList<>();
@@ -74,35 +73,6 @@ public class PredictActivity implements Runnable {
 
 		}
 		cassandraTemplate.insert(result);
-	}
-
-	public static synchronized String main() {
-
-		// Persist to the result table
-
-		// JavaRDD<Result> resultRDD = sc.parallelize(listOfResult);
-		// javaFunctions(resultRDD).writerBuilder("activityrecognition",
-		// "result", mapToRow(Result.class))
-		// .saveToCassandra();
-
-		// timer.schedule(new ResultCalculatorTask(),
-		// Constants.NUMBER_OF_SECONDS_DELAY);
-		return "";
-	}
-
-	public static double predict_Old(JavaSparkContext sc) {
-
-		DecisionTreeModel model = DecisionTreeModel.load(sc.sc(), "activityrecognition");
-
-		double[] feature = { 3.3809183673469394, -6.880102040816324, 0.8790816326530612, 50.08965378708187,
-				84.13105050494424, 20.304453787081833, 5.930491461890875, 7.544194085797583, 3.519248229904206,
-				12.968485972481643, 7.50031E8 };
-
-		Vector sample = Vectors.dense(feature);
-		double prediction = model.predict(sample);
-
-		return prediction;
-
 	}
 
 	public static String predict(JavaSparkContext sc) {
@@ -150,7 +120,7 @@ public class PredictActivity implements Runnable {
 
 		// user ID is hard coded in REST API app
 		JavaRDD<CassandraRow> data = cassandraRowsRDD.select("timestamp", "x", "y", "z").where("user_id=?", "TEST_USER")
-				.withDescOrder().limit(100l); // load the last 100 acceleration.
+				.withDescOrder().limit(300l); // load the last 100 acceleration.
 
 		try {
 			if (data.count() > 0) {
@@ -160,7 +130,7 @@ public class PredictActivity implements Runnable {
 					Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
 					session = cluster.connect("activityrecognition");
 				}
-			    session.execute(query);
+				session.execute(query);
 			}
 		} catch (Exception exception) {
 			System.out.println("ERROR ----- " + exception.getMessage());
