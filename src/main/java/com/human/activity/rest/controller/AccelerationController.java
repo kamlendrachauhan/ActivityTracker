@@ -36,9 +36,7 @@ public class AccelerationController {
 
 	@RequestMapping(method = POST, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> newAcceleration(@RequestBody @Valid AccelerationModel accelerationModel) {
-
-		return status(CREATED).build();
-		/*
+	
 		Acceleration acceleration = new Acceleration(accelerationModel);
 
 		if (log.isInfoEnabled()) {
@@ -48,7 +46,7 @@ public class AccelerationController {
 		cassandraTemplate.insert(acceleration);
 
 		return status(CREATED).build();
-		*/
+		
 	}
 
 	@RequestMapping(method = RequestMethod.GET, produces = TEXT_HTML_VALUE)
