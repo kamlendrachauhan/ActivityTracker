@@ -36,6 +36,7 @@ public class PredictActivity implements Runnable {
 	private static DecisionTreeModel model;
 	private static Timer timer;
 	private static Session session;
+	private static boolean isDataAvailable;
 
 	public PredictActivity() {
 
@@ -53,26 +54,27 @@ public class PredictActivity implements Runnable {
 
 	public void startPrediction() {
 		String predictedActivity = predict(this.sc);
+		if (isDataAvailable) {
+			Result result = new Result();
+			UserTimestamp userTimestamp = new UserTimestamp();
+			userTimestamp.setTimestamp(System.currentTimeMillis());
+			userTimestamp.setUser_id("TEST_USER");
+			result.setUserTimestamp(userTimestamp);
+			System.out.println("----------- Activity  ---------> " + predictedActivity);
+			result.setPrediction(predictedActivity);
 
-		Result result = new Result();
-		UserTimestamp userTimestamp = new UserTimestamp();
-		userTimestamp.setTimestamp(System.currentTimeMillis());
-		userTimestamp.setUser_id("TEST_USER");
-		result.setUserTimestamp(userTimestamp);
-		System.out.println("----------- Activity  ---------> " + predictedActivity);
-		result.setPrediction(predictedActivity);
+			List<Result> listOfResult = new ArrayList<>();
+			listOfResult.add(result);
 
-		List<Result> listOfResult = new ArrayList<>();
-		listOfResult.add(result);
+			if (this.cassandraTemplate == null) {
+				Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
+				session = cluster.connect("activityrecognition");
+				CassandraOperations cassandraOps = new CassandraTemplate(session);
+				this.cassandraTemplate = cassandraOps;
 
-		if (this.cassandraTemplate == null) {
-			Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
-			session = cluster.connect("activityrecognition");
-			CassandraOperations cassandraOps = new CassandraTemplate(session);
-			this.cassandraTemplate = cassandraOps;
-
+			}
+			cassandraTemplate.insert(result);
 		}
-		cassandraTemplate.insert(result);
 	}
 
 	public static String predict(JavaSparkContext sc) {
@@ -136,6 +138,7 @@ public class PredictActivity implements Runnable {
 			System.out.println("ERROR ----- " + exception.getMessage());
 		}
 		if (data.count() > 0) {
+			isDataAvailable = true;
 			// transform into double array
 			JavaRDD<double[]> doubles = DataManager.toDouble(data);
 			// transform into vector without timestamp
@@ -165,6 +168,9 @@ public class PredictActivity implements Runnable {
 
 			features = new double[] { mean[0], mean[1], mean[2], variance[0], variance[1], variance[2], avgAbsDiff[0],
 					avgAbsDiff[1], avgAbsDiff[2], resultant, avgTimePeak };
+		} else {
+			// No data in database dont predict anything
+			isDataAvailable = false;
 		}
 		return Vectors.dense(features);
 	}
