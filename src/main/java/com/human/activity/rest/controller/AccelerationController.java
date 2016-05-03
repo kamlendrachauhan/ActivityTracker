@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.querybuilder.Select;
 import com.human.activity.rest.model.Acceleration;
 import com.human.activity.rest.model.AccelerationModel;
 import com.human.activity.rest.model.Result;
@@ -75,14 +77,16 @@ public class AccelerationController {
 
 		return response;
 	}
-	
-	@RequestMapping(value = "/summary", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Object> getSummaryOfPrediction() {
-		Object prediction = cassandraTemplate
-				.select("select group_and_count(prediction) from activityrecognition.result", Object.class)
-				.get(0);
 
-		ResponseEntity<Object> response = new ResponseEntity<Object>(prediction, HttpStatus.OK);
+	@RequestMapping(value = "/summary", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getSummaryOfPrediction() {
+		Select select = QueryBuilder.select("group_and_count(prediction)").from("activityrecognition", "result");
+		select.where(QueryBuilder.eq("user_id", "TEST_USER"));
+		select.limit(1);
+
+		String result = cassandraTemplate.queryForObject(select, String.class);
+
+		ResponseEntity<String> response = new ResponseEntity<String>(result, HttpStatus.OK);
 
 		return response;
 	}
