@@ -55,7 +55,7 @@ public class TrainingController {
 		UserTimestamp userTimestamp = new UserTimestamp();
 		userTimestamp.setTimestamp(resultModel.getTimestamp());
 		userTimestamp.setUser_id("TEST_USER");
-		result.setPrediction(resultModel.getPrediction());
+		result.setPrediction(resultModel.getActivity());
 		result.setUserTimestamp(userTimestamp);
 
 		cassandraTemplate.insert(result);

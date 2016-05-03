@@ -18,7 +18,7 @@ public class ResultModel implements Serializable {
 	@NotNull
     private Long timestamp;
 
-    private String prediction;
+    private String activity;
 
     public ResultModel() {
     }
@@ -31,11 +31,13 @@ public class ResultModel implements Serializable {
 		this.timestamp = timestamp;
 	}
 
-	public String getPrediction() {
-        return prediction;
-    }
+	public String getActivity() {
+		return activity;
+	}
 
-    public void setPrediction(String prediction) {
-        this.prediction = prediction;
-    }
+	public void setActivity(String activity) {
+		this.activity = activity;
+	}
+
+
 }
