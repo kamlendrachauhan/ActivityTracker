@@ -51,7 +51,7 @@ gradle build && java -jar build/libs/accelerometer-rest-to-cassandra-1.0.jar “
 
 ## Results:
       The Activity Tracker system determines the user’s activity every 15 seconds and the current activity can be seen either via UI or Mobile application or using the Rest Client using the following URL/parameters:
-http://<host ip>:8080/activity/acceleration/prediction
+http://104.197.95.54:8080/activity/acceleration/prediction
 Content-Type: application/json
 HTTP Request-Method: GET
 
