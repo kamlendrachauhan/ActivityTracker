@@ -43,7 +43,7 @@ public class RecognizeActivity {
 
     List<LabeledPoint> labeledPoints = new ArrayList<>();
 
-    for (int i = 1; i < 2; i++) {
+    for (int i = 1; i < 38; i++) {
 
       for (String activity: ACTIVITIES) {
 
@@ -107,7 +107,13 @@ public class RecognizeActivity {
           }
         }
       }
-    }
+      try {
+		Thread.sleep(30000);
+	} catch (InterruptedException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+    }			
 
     // ML part with the models: create model prediction and train data on it //
     if (labeledPoints.size() > 0) {
@@ -123,8 +129,8 @@ public class RecognizeActivity {
       // With DecisionTree
       double errDT = new DecisionTrees(trainingData, testData).createModel(sc);
 
-      // With Random Forest
-      double errRF = new RandomForests(trainingData, testData).createModel();
+      // With Random Forest	
+      double errRF = new RandomForests(trainingData, testData).createModel(sc);
 
       System.out.println("sample size " + data.count());
       System.out.println("Test Error Decision Tree: " + errDT);
