@@ -5,6 +5,7 @@ import static com.human.activity.server.data.ExtractFeature.computeAvgAbsDiffere
 import static com.human.activity.server.data.ExtractFeature.computeResultantAcc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -112,6 +113,19 @@ public class PredictActivity implements Runnable {
 
 	}
 
+	
+	 public static double predictOld(JavaSparkContext sc) {
+
+		    DecisionTreeModel model = DecisionTreeModel.load(sc.sc(), "activityrecognition");
+
+		    double[] feature = {3.3809183673469394,-6.880102040816324,0.8790816326530612,50.08965378708187,84.13105050494424,20.304453787081833,5.930491461890875,7.544194085797583,3.519248229904206,12.968485972481643,7.50031E8};
+
+		    Vector sample = Vectors.dense(feature);
+		    double prediction = model.predict(sample);
+
+		    return prediction;
+
+		  }
 	private static Vector computeFeature(JavaSparkContext sc) {
 
 		double[] features = new double[11];
@@ -168,6 +182,8 @@ public class PredictActivity implements Runnable {
 
 			features = new double[] { mean[0], mean[1], mean[2], variance[0], variance[1], variance[2], avgAbsDiff[0],
 					avgAbsDiff[1], avgAbsDiff[2], resultant, avgTimePeak };
+			System.out.println("Features Calculated :: -------- > "+Arrays.toString(features));
+
 		} else {
 			// No data in database dont predict anything
 			isDataAvailable = false;
