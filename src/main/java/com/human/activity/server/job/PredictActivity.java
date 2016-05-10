@@ -144,7 +144,7 @@ public class PredictActivity implements Runnable {
 		JavaRDD<CassandraRow> data = cassandraRowsRDD.select("timestamp", "x", "y", "z").where("user_id=?", "TEST_USER")
 				.withDescOrder().limit(300l); // load the last 100 acceleration.
 
-		/*try {
+		try {
 			if (data.count() > 0) {
 				String query = "TRUNCATE acceleration;";
 
@@ -156,7 +156,7 @@ public class PredictActivity implements Runnable {
 			}
 		} catch (Exception exception) {
 			System.out.println("ERROR ----- " + exception.getMessage());
-		}*/
+		}
 		if (data.count() > 0) {
 			isDataAvailable = true;
 			// transform into double array
