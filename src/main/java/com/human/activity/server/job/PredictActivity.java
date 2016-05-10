@@ -54,27 +54,31 @@ public class PredictActivity implements Runnable {
 	}
 
 	public void startPrediction() {
-		String predictedActivity = predict(this.sc);
-		if (isDataAvailable) {
-			Result result = new Result();
-			UserTimestamp userTimestamp = new UserTimestamp();
-			userTimestamp.setTimestamp(System.currentTimeMillis());
-			userTimestamp.setUser_id("TEST_USER");
-			result.setUserTimestamp(userTimestamp);
-			System.out.println("----------- Activity  ---------> " + predictedActivity);
-			result.setPrediction(predictedActivity);
+		try {
+			String predictedActivity = predict(this.sc);
+			if (isDataAvailable) {
+				Result result = new Result();
+				UserTimestamp userTimestamp = new UserTimestamp();
+				userTimestamp.setTimestamp(System.currentTimeMillis());
+				userTimestamp.setUser_id("TEST_USER");
+				result.setUserTimestamp(userTimestamp);
+				System.out.println("----------- Activity  ---------> " + predictedActivity);
+				result.setPrediction(predictedActivity);
 
-			List<Result> listOfResult = new ArrayList<>();
-			listOfResult.add(result);
+				List<Result> listOfResult = new ArrayList<>();
+				listOfResult.add(result);
 
-			if (this.cassandraTemplate == null) {
-				Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
-				session = cluster.connect("activityrecognition");
-				CassandraOperations cassandraOps = new CassandraTemplate(session);
-				this.cassandraTemplate = cassandraOps;
+				if (this.cassandraTemplate == null) {
+					Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(9042).build();
+					session = cluster.connect("activityrecognition");
+					CassandraOperations cassandraOps = new CassandraTemplate(session);
+					this.cassandraTemplate = cassandraOps;
 
+				}
+				cassandraTemplate.insert(result);
 			}
-			cassandraTemplate.insert(result);
+		} catch (Exception ex) {
+			System.out.println("Error occured " + ex.getMessage());
 		}
 	}
 
@@ -113,19 +117,21 @@ public class PredictActivity implements Runnable {
 
 	}
 
-	
-	 public static double predictOld(JavaSparkContext sc) {
+	public static double predictOld(JavaSparkContext sc) {
 
-		    DecisionTreeModel model = DecisionTreeModel.load(sc.sc(), "activityrecognition");
+		DecisionTreeModel model = DecisionTreeModel.load(sc.sc(), "activityrecognition");
 
-		    double[] feature = {3.3809183673469394,-6.880102040816324,0.8790816326530612,50.08965378708187,84.13105050494424,20.304453787081833,5.930491461890875,7.544194085797583,3.519248229904206,12.968485972481643,7.50031E8};
+		double[] feature = { -0.9689999999999999, 9.449899999999996, -0.17310000000000003, 0.03594040404040402,
+				0.007996959595959599, 0.009480191919191925, 0.12651999999999997, 0.06350400000000028,
+				0.07619000000000002, 9.503374874590646, 5.00010505050505E7 };
 
-		    Vector sample = Vectors.dense(feature);
-		    double prediction = model.predict(sample);
+		Vector sample = Vectors.dense(feature);
+		double prediction = model.predict(sample);
 
-		    return prediction;
+		return prediction;
 
-		  }
+	}
+
 	private static Vector computeFeature(JavaSparkContext sc) {
 
 		double[] features = new double[11];
@@ -138,7 +144,7 @@ public class PredictActivity implements Runnable {
 		JavaRDD<CassandraRow> data = cassandraRowsRDD.select("timestamp", "x", "y", "z").where("user_id=?", "TEST_USER")
 				.withDescOrder().limit(300l); // load the last 100 acceleration.
 
-		try {
+		/*try {
 			if (data.count() > 0) {
 				String query = "TRUNCATE acceleration;";
 
@@ -150,7 +156,7 @@ public class PredictActivity implements Runnable {
 			}
 		} catch (Exception exception) {
 			System.out.println("ERROR ----- " + exception.getMessage());
-		}
+		}*/
 		if (data.count() > 0) {
 			isDataAvailable = true;
 			// transform into double array
@@ -182,7 +188,7 @@ public class PredictActivity implements Runnable {
 
 			features = new double[] { mean[0], mean[1], mean[2], variance[0], variance[1], variance[2], avgAbsDiff[0],
 					avgAbsDiff[1], avgAbsDiff[2], resultant, avgTimePeak };
-			System.out.println("Features Calculated :: -------- > "+Arrays.toString(features));
+			System.out.println("Features Calculated :: -------- > " + Arrays.toString(features));
 
 		} else {
 			// No data in database dont predict anything
@@ -193,12 +199,14 @@ public class PredictActivity implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("-------------------------------> Predicted value : " + PredictActivity.predictOld(sc));
+		
+
 		timer = new Timer();
 		timer.schedule(new ResultCalculatorTask(), Constants.NUMBER_OF_SECONDS_DELAY,
 				Constants.NUMBER_OF_SECONDS_DELAY);
 		PredictActivity predictA = new PredictActivity();
 		predictA.startPrediction();
-
 		// PredictActivity.main();
 	}
 
